@@ -4628,7 +4628,7 @@ const IntegratedInventoryManager = (() => {
     };
 })();
 
-// ===== INTEGRATED DIALOG MANAGER (Enhanced with Emotion and Story) =====
+// ===== INTEGRATED DIALOG MANAGER (Enhanced with Emotion and Story) - REWRITTEN =====
 const IntegratedDialogManager = (() => {
     const updateDialogOptions = () => {
         const dialogOptions = IntegratedUIManager.elements.dialogOptions;
@@ -4640,11 +4640,54 @@ const IntegratedDialogManager = (() => {
         
         // Base options (original + enhanced)
         const options = [
-            { text: "Compliment her appearance", mood: 10, relationship: 5, adult: 0, questId: 1, progress: 30 },
-            { text: "Offer a drink", mood: 5, relationship: 3, adult: 0, questId: 2, progress: 50 },
-            { text: "Tell a joke", mood: -5, relationship: 2, adult: 0 },
-            { text: "Ask about her interests", mood: 15, relationship: 8, adult: 0, questId: 1, progress: 20 },
-            { text: "Share a personal story", mood: 20, relationship: 12, adult: 0, questId: 1, progress: 25 }
+            { 
+                text: "Compliment her appearance", 
+                mood: 10, 
+                relationship: 5, 
+                adult: 0, 
+                questId: 1, 
+                progress: 30,
+                type: "compliment",
+                category: "basic"
+            },
+            { 
+                text: "Offer a drink", 
+                mood: 5, 
+                relationship: 3, 
+                adult: 0, 
+                questId: 2, 
+                progress: 50,
+                type: "drink",
+                category: "basic"
+            },
+            { 
+                text: "Tell a joke", 
+                mood: -5, 
+                relationship: 2, 
+                adult: 0,
+                type: "humor",
+                category: "basic"
+            },
+            { 
+                text: "Ask about her interests", 
+                mood: 15, 
+                relationship: 8, 
+                adult: 0, 
+                questId: 1, 
+                progress: 20,
+                type: "interest",
+                category: "basic"
+            },
+            { 
+                text: "Share a personal story", 
+                mood: 20, 
+                relationship: 12, 
+                adult: 0, 
+                questId: 1, 
+                progress: 25,
+                type: "story",
+                category: "personal"
+            }
         ];
         
         // Add NPC-specific options in enhanced mode
@@ -4660,13 +4703,37 @@ const IntegratedDialogManager = (() => {
             if (emotion) {
                 switch(emotion.current) {
                     case 'joy':
-                        options.push({ text: `Make ${npc.name} laugh`, mood: 15, relationship: 10, adult: 0, emotion: 'joy' });
+                        options.push({ 
+                            text: `Make ${npc.name} laugh`, 
+                            mood: 15, 
+                            relationship: 10, 
+                            adult: 0, 
+                            emotion: 'joy',
+                            type: "humor",
+                            category: "emotion"
+                        });
                         break;
                     case 'sadness':
-                        options.push({ text: `Cheer up ${npc.name}`, mood: 20, relationship: 15, adult: 0, emotion: 'sadness' });
+                        options.push({ 
+                            text: `Cheer up ${npc.name}`, 
+                            mood: 20, 
+                            relationship: 15, 
+                            adult: 0, 
+                            emotion: 'sadness',
+                            type: "support",
+                            category: "emotion"
+                        });
                         break;
                     case 'anger':
-                        options.push({ text: `Calm ${npc.name} down`, mood: 15, relationship: 12, adult: 0, emotion: 'anger' });
+                        options.push({ 
+                            text: `Calm ${npc.name} down`, 
+                            mood: 15, 
+                            relationship: 12, 
+                            adult: 0, 
+                            emotion: 'anger',
+                            type: "apology",
+                            category: "emotion"
+                        });
                         break;
                 }
             }
@@ -4678,12 +4745,14 @@ const IntegratedDialogManager = (() => {
                     mood: 25, 
                     relationship: 15, 
                     adult: 0,
-                    npcSpecific: true 
+                    npcSpecific: true,
+                    type: "story",
+                    category: "personal"
                 });
             }
             
-            // Add gift options
-            const gifts = ['flowers', 'chocolate', 'wine', 'perfume'];
+            // Add gift options based on NPC preferences
+            const gifts = ['flowers', 'chocolate', 'wine', 'perfume', 'cigar', 'whiskey', 'champagne'];
             gifts.forEach(gift => {
                 if (state.inventory.includes(gift) && npc.giftPreferences.includes(gift)) {
                     const giftItem = IntegratedGameState.getItem(gift);
@@ -4693,40 +4762,68 @@ const IntegratedDialogManager = (() => {
                         relationship: 20, 
                         adult: 0,
                         item: gift,
-                        npcSpecific: true 
+                        npcSpecific: true,
+                        type: "gift",
+                        category: "gift"
                     });
                 }
             });
             
-            // Add emotion manipulation options
-            options.push({ 
-                text: `Try to make ${npc.name} happy`, 
-                mood: 10, 
-                relationship: 8, 
-                adult: 0,
-                emotionManipulation: 'joy',
-                enhanced: true
-            });
+            // Add emotion manipulation options based on current emotion
+            if (emotion) {
+                options.push({ 
+                    text: `Try to make ${npc.name} feel ${emotion.current}`, 
+                    mood: 10, 
+                    relationship: 8, 
+                    adult: 0,
+                    emotionManipulation: emotion.current,
+                    enhanced: true,
+                    type: "emotion",
+                    category: "emotion"
+                });
+            }
         }
         
         // Smart option only in AI mode
         if (IntegratedNPCAI.getAIMode()) {
-            options.push(
-                { text: "Try a clever pickup line", mood: 15, relationship: 10, adult: 0, questId: 1, progress: 20, smart: true }
-            );
+            options.push({
+                text: "Try a clever pickup line", 
+                mood: 15, 
+                relationship: 10, 
+                adult: 0, 
+                questId: 1, 
+                progress: 20, 
+                smart: true,
+                type: "flirt",
+                category: "smart"
+            });
         }
         
         // Adult options
         if (state.adultMode && state.relationship > 40) {
-            options.push(
-                { text: "Make a suggestive comment", mood: -10, relationship: 10, adult: 3, questId: 6, progress: 15 }
-            );
+            options.push({
+                text: "Make a suggestive comment", 
+                mood: -10, 
+                relationship: 10, 
+                adult: 3, 
+                questId: 6, 
+                progress: 15,
+                type: "flirt",
+                category: "adult"
+            });
         }
         
         if (state.adultMode && state.relationship > 60) {
-            options.push(
-                { text: "Whisper something naughty", mood: 5, relationship: 20, adult: 7, questId: 6, progress: 30 }
-            );
+            options.push({
+                text: "Whisper something naughty", 
+                mood: 5, 
+                relationship: 20, 
+                adult: 7, 
+                questId: 6, 
+                progress: 30,
+                type: "flirt",
+                category: "adult"
+            });
         }
         
         // Quest-specific options
@@ -4738,7 +4835,9 @@ const IntegratedDialogManager = (() => {
                     relationship: 20, 
                     adult: 0, 
                     questId: 3, 
-                    progress: 100 
+                    progress: 100,
+                    type: "gift",
+                    category: "quest"
                 });
             }
             if (currentQuest.id === 4 && state.inventory.includes('perfume')) {
@@ -4748,7 +4847,9 @@ const IntegratedDialogManager = (() => {
                     relationship: 15, 
                     adult: 0, 
                     questId: 4, 
-                    progress: 100 
+                    progress: 100,
+                    type: "gift",
+                    category: "quest"
                 });
             }
         }
@@ -4761,25 +4862,38 @@ const IntegratedDialogManager = (() => {
                 relationship: 15, 
                 adult: true, 
                 type: 'date',
-                npcSpecific: true 
+                npcSpecific: true,
+                category: "social"
             });
         }
         
         // Create option elements
         options.forEach((option, index) => {
             const optionElement = document.createElement('div');
-            optionElement.className = `dialog-option ${option.adult > 0 ? 'adult-option' : ''} ${option.smart ? 'ai-option' : ''} ${option.npcSpecific ? 'npc-specific' : ''} ${option.emotion ? 'emotion-option' : ''}`;
+            optionElement.className = `dialog-option ${option.adult > 0 ? 'adult-option' : ''} ${option.smart ? 'ai-option' : ''} ${option.npcSpecific ? 'npc-specific' : ''} ${option.emotion ? 'emotion-option' : ''} ${option.category}-option`;
             optionElement.textContent = `${index + 1}. ${option.text}`;
             optionElement.setAttribute('role', 'menuitem');
             optionElement.tabIndex = 0;
             
+            // Style based on category
+            const categoryStyles = {
+                basic: { borderLeft: '4px solid var(--primary)' },
+                emotion: { borderLeft: '4px solid var(--emotion)' },
+                personal: { borderLeft: '4px solid var(--trust)' },
+                gift: { borderLeft: '4px solid var(--joy)' },
+                smart: { borderLeft: '4px solid var(--warning)' },
+                adult: { borderLeft: '4px solid var(--adult)' },
+                quest: { borderLeft: '4px solid var(--success)' },
+                social: { borderLeft: '4px solid var(--anticipation)' }
+            };
+            
+            if (categoryStyles[option.category]) {
+                Object.assign(optionElement.style, categoryStyles[option.category]);
+            }
+            
             if (option.smart) {
                 optionElement.style.border = '2px solid var(--primary)';
                 optionElement.style.background = 'linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(142, 68, 173, 0.2))';
-            }
-            
-            if (option.npcSpecific) {
-                optionElement.style.borderLeft = '4px solid var(--warning)';
             }
             
             if (option.emotion) {
@@ -4822,14 +4936,21 @@ const IntegratedDialogManager = (() => {
                 optionElement.addEventListener('click', () => {
                     selectDialogOption(option, npc || { name: 'Eve' });
                 });
-                optionElement.title = option.questId ? "Advances quest progress" : 
-                                    option.smart ? "Smart AI option" : 
-                                    option.emotion ? "Emotion-based option" :
-                                    option.npcSpecific ? "NPC-specific option" : "";
+                optionElement.title = getOptionTooltip(option, npc);
             }
             
             dialogOptions.appendChild(optionElement);
         });
+    };
+    
+    const getOptionTooltip = (option, npc) => {
+        if (option.questId) return "Advances quest progress";
+        if (option.smart) return "Smart AI option";
+        if (option.emotion) return "Emotion-based option";
+        if (option.npcSpecific) return `${npc?.name || 'NPC'}-specific option`;
+        if (option.category === 'gift') return `Uses ${option.item} from inventory`;
+        if (option.type === 'date') return "Schedule a romantic date";
+        return "Standard dialog option";
     };
     
     const selectDialogOption = (option, npc) => {
@@ -4856,13 +4977,15 @@ const IntegratedDialogManager = (() => {
             EmotionSystem.setEmotion(npc.name, option.emotionManipulation, 70);
         }
         
-        // Generate response
+        // Generate response with player's dialog text as context
         setTimeout(() => {
             const npcResponse = IntegratedNPCAI.getResponse(
                 IntegratedGameState.getState().mood,
                 IntegratedGameState.getState().relationship,
                 option.adult,
-                npc.name
+                npc.name,
+                option.text, // Pass player's dialog text
+                option.type   // Pass option type for context
             );
             
             IntegratedUIManager.addMessage(`${npc.name}: ${npcResponse}`, 'npc', option.adult > 0);
@@ -4870,7 +4993,7 @@ const IntegratedDialogManager = (() => {
             // Update game state
             const state = IntegratedGameState.getState();
             
-            // Apply emotion modifier
+            // Apply emotion modifier based on NPC's individual emotion
             const emotionModifier = EmotionSystem.getEmotionModifier(npc.name, 'mood');
             const responseModifier = EmotionSystem.getEmotionModifier(npc.name, 'response');
             
@@ -4889,10 +5012,10 @@ const IntegratedDialogManager = (() => {
                 score: newScore
             });
             
-            // Update NPC state
+            // Update NPC state with individual mood changes
             if (state.enhancedMode) {
                 IntegratedGameState.updateNPC(npc.name, {
-                    baseMood: Math.min(100, npc.baseMood + adjustedMoodChange),
+                    baseMood: Math.max(0, Math.min(100, npc.baseMood + adjustedMoodChange)),
                     intimacy: option.adult > 0 ? npc.intimacy + option.adult : npc.intimacy,
                     storyProgress: option.npcSpecific ? npc.storyProgress + 1 : npc.storyProgress
                 });
@@ -4947,15 +5070,17 @@ const IntegratedDialogManager = (() => {
             IntegratedUIManager.updateStats();
             IntegratedQuestManager.updateOverallProgress();
             
-            // Add NPC comment
-            const comment = IntegratedNPCAI.generateComment(npc.name, option.adult);
-            IntegratedGameState.addComment({
-                npc: npc.name,
-                text: comment,
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                adult: option.adult > 0
-            });
-            IntegratedUIManager.renderComments();
+            // Add NPC comment with context from player's dialog
+            const comment = IntegratedNPCAI.generateComment(npc.name, option.adult, option.text, option.type);
+            if (comment) { // Only add comment if not in cooldown
+                IntegratedGameState.addComment({
+                    npc: npc.name,
+                    text: comment,
+                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                    adult: option.adult > 0
+                });
+                IntegratedUIManager.renderComments();
+            }
             
             // Visual feedback
             if (option.mood > 0) {
@@ -5187,40 +5312,41 @@ const IntegratedItemUseHandler = (() => {
     };
 })();
 
-// ===== ENHANCED NPC AI SYSTEM (Enhanced with Emotion) =====
+// ===== ENHANCED NPC AI SYSTEM (Enhanced with Emotion) - REWRITTEN =====
 const IntegratedNPCAI = (() => {
     let aiMode = true;
+    const commentCooldowns = new Map();
     
     const responses = {
-        // AI Mode Responses
-        ai_neutral: [
-            "Interesting approach. Let's see where this goes.",
-            "You're not like the others. I'll give you that.",
-            "That was... unexpected.",
-            "You certainly know how to get my attention.",
-            "I'm listening. Continue."
-        ],
-        ai_positive: [
-            "That's actually quite charming!",
-            "You're making this difficult to resist.",
-            "I'm starting to see your appeal.",
-            "That was surprisingly sweet.",
-            "Okay, you've got my full attention now."
-        ],
-        ai_negative: [
-            "Seriously? That's your best line?",
-            "I've had better conversations with a wall.",
-            "You're trying too hard.",
-            "That's not going to work on me.",
-            "Maybe you should try a different approach."
-        ],
-        ai_adult: [
-            "You're being quite forward... I like it.",
-            "Now you're speaking my language.",
-            "That's bold. Let's see if you can back it up.",
-            "You have my attention... and my interest.",
-            "Finally, someone who isn't afraid to be direct."
-        ],
+        // AI Mode Responses - NPC-specific templates
+        ai_neutral: {
+            Eve: ["Interesting approach.", "You're not like the others.", "I'm listening."],
+            Jessica: ["Hey there!", "What's up?", "Tell me more!"],
+            Danielle: ["That's interesting.", "I see.", "Please continue."],
+            Ashley: ["Cool!", "Nice!", "Tell me more!"],
+            Nicole: ["Interesting observation.", "Go on.", "I'm listening."]
+        },
+        ai_positive: {
+            Eve: ["You're making this difficult to resist.", "Okay, you've got my attention now."],
+            Jessica: ["You're so charming!", "I like your style!", "Keep talking like that!"],
+            Danielle: ["That's very sweet of you.", "You're quite the romantic.", "Thank you for saying that."],
+            Ashley: ["Aw, thanks!", "You're awesome!", "That's so nice!"],
+            Nicole: ["You're quite perceptive.", "That's... intriguing.", "You have good taste."]
+        },
+        ai_negative: {
+            Eve: ["Seriously? That's your best line?", "You're trying too hard."],
+            Jessica: ["Ugh, really?", "That's not working.", "Try again!"],
+            Danielle: ["That's... inappropriate.", "Please be more respectful."],
+            Ashley: ["Not cool!", "That's rude!", "No thanks!"],
+            Nicole: ["Poor choice of words.", "That won't work here.", "Try a different approach."]
+        },
+        ai_adult: {
+            Eve: ["Now you're speaking my language.", "You have my attention... and my interest."],
+            Jessica: ["Ooh, I like where this is going!", "Now we're talking!", "You're being naughty!"],
+            Danielle: ["You're being quite forward...", "That's... bold of you to say."],
+            Ashley: ["Whoa, smooth!", "You're cheeky!", "Haha, nice one!"],
+            Nicole: ["Bold move.", "You're not afraid to be direct.", "Interesting proposition."]
+        },
         
         // Simple Mode Responses
         simple_neutral: [
@@ -5253,143 +5379,437 @@ const IntegratedNPCAI = (() => {
         ]
     };
     
+    // Context-aware dialog responses based on player's choice
+    const getContextResponse = (npcName, playerText, optionType, relationship) => {
+        const npcData = IntegratedGameState.getNPC(npcName);
+        const emotion = EmotionSystem.getEmotion(npcName);
+        const currentMood = npcData?.baseMood || 50;
+        
+        // Analyze player's dialog option
+        const text = playerText.toLowerCase();
+        
+        // Determine response category based on option content
+        if (optionType === 'compliment' || text.includes('compliment') || text.includes('beautiful') || text.includes('pretty')) {
+            return getComplimentResponse(npcName, currentMood, relationship);
+        }
+        if (optionType === 'flirt' || text.includes('flirt') || text.includes('sexy') || text.includes('attractive')) {
+            return getFlirtResponse(npcName, currentMood, relationship);
+        }
+        if (optionType === 'story' || text.includes('story') || text.includes('tell') || text.includes('share')) {
+            return getStoryResponse(npcName, relationship);
+        }
+        if (text.includes('drink') || text.includes('wine') || text.includes('champagne')) {
+            return getDrinkResponse(npcName, currentMood);
+        }
+        if (text.includes('gift') || text.includes('give') || text.includes('present')) {
+            return getGiftResponse(npcName, currentMood);
+        }
+        
+        return null; // No specific context match
+    };
+    
+    const getComplimentResponse = (npcName, mood, relationship) => {
+        const responsesByNPC = {
+            Eve: {
+                highMood: ["You're making me blush.", "That's very sweet of you.", "You have a way with words."],
+                mediumMood: ["Thank you.", "That's nice of you.", "I appreciate that."],
+                lowMood: ["Flattery will get you nowhere.", "Save the compliments.", "I'm not in the mood."]
+            },
+            Jessica: {
+                highMood: ["Aw, you're making me blush!", "You're so sweet!", "Keep them coming!"],
+                mediumMood: ["Thanks, handsome!", "Nice one!", "I like that."],
+                lowMood: ["Nice try.", "Not bad.", "Could be better."]
+            },
+            Danielle: {
+                highMood: ["That's very kind of you.", "You're too sweet.", "Thank you for saying that."],
+                mediumMood: ["That's nice.", "Thank you.", "I appreciate it."],
+                lowMood: ["That's... unnecessary.", "Please don't.", "Let's be professional."]
+            },
+            Ashley: {
+                highMood: ["Awesome!", "You're the best!", "Thanks a bunch!"],
+                mediumMood: ["Cool!", "Nice!", "Thanks!"],
+                lowMood: ["Uh huh.", "Okay.", "Sure."]
+            },
+            Nicole: {
+                highMood: ["You have good taste.", "Interesting compliment.", "I'll accept that."],
+                mediumMood: ["Noted.", "Interesting.", "I see."],
+                lowMood: ["Save it.", "Too little too late.", "Unnecessary."]
+            }
+        };
+        
+        const npcResponses = responsesByNPC[npcName] || responsesByNPC.Eve;
+        let responseSet;
+        
+        if (mood > 70) responseSet = npcResponses.highMood;
+        else if (mood > 40) responseSet = npcResponses.mediumMood;
+        else responseSet = npcResponses.lowMood;
+        
+        return responseSet[Math.floor(Math.random() * responseSet.length)];
+    };
+    
+    const getFlirtResponse = (npcName, mood, relationship) => {
+        const responsesByNPC = {
+            Eve: {
+                highRelationship: ["You're being quite forward... I like it.", "Now you're talking.", "Finally, someone with confidence."],
+                mediumRelationship: ["Smooth.", "Interesting approach.", "You have courage, I'll give you that."],
+                lowRelationship: ["That's a bit much.", "Let's keep it friendly.", "Too soon for that."]
+            },
+            Jessica: {
+                highRelationship: ["Ooh, I like that!", "You're so smooth!", "Keep going!"],
+                mediumRelationship: ["Not bad!", "You're cheeky!", "Haha, nice try!"],
+                lowRelationship: ["Easy there!", "Slow down!", "Whoa, cowboy!"]
+            },
+            Danielle: {
+                highRelationship: ["You're being bold tonight.", "That's... direct.", "My, my."],
+                mediumRelationship: ["That's forward.", "Interesting.", "Hmm."],
+                lowRelationship: ["Please be respectful.", "That's inappropriate.", "Let's maintain decorum."]
+            },
+            Ashley: {
+                highRelationship: ["Haha, smooth!", "You're funny!", "Nice one!"],
+                mediumRelationship: ["Cheeky!", "Bold move!", "Hehe."],
+                lowRelationship: ["Whoa there!", "Easy tiger!", "Too fast!"]
+            },
+            Nicole: {
+                highRelationship: ["Bold move. I like it.", "You're not afraid, are you?", "Interesting gamble."],
+                mediumRelationship: ["Risky play.", "You have nerve.", "Not many would dare."],
+                lowRelationship: ["Too bold.", "Reign it in.", "Control yourself."]
+            }
+        };
+        
+        const npcResponses = responsesByNPC[npcName] || responsesByNPC.Eve;
+        let responseSet;
+        
+        if (relationship > 60) responseSet = npcResponses.highRelationship;
+        else if (relationship > 30) responseSet = npcResponses.mediumRelationship;
+        else responseSet = npcResponses.lowRelationship;
+        
+        return responseSet[Math.floor(Math.random() * responseSet.length)];
+    };
+    
+    const getStoryResponse = (npcName, relationship) => {
+        const stories = StoryEngine.generateStoryDialog(npcName, relationship);
+        return stories || "That's interesting.";
+    };
+    
+    const getDrinkResponse = (npcName, mood) => {
+        const responses = {
+            Eve: ["I could use a drink.", "Thanks, I was getting thirsty.", "Perfect timing."],
+            Jessica: ["Yay, drinks!", "Ooh, my favorite!", "Cheers!"],
+            Danielle: ["Thank you, that's thoughtful.", "How nice of you.", "I appreciate the gesture."],
+            Ashley: ["Awesome, thanks!", "You're the best!", "Sweet!"],
+            Nicole: ["Interesting choice.", "I accept.", "A drink won't hurt."]
+        };
+        
+        return responses[npcName]?.[Math.floor(Math.random() * responses[npcName].length)] || "Thanks for the drink.";
+    };
+    
+    const getGiftResponse = (npcName, mood) => {
+        const responses = {
+            Eve: ["You shouldn't have.", "That's thoughtful.", "How nice of you."],
+            Jessica: ["Ooh, a present!", "You're so sweet!", "For me? Thank you!"],
+            Danielle: ["That's very kind.", "You're too generous.", "Thank you for the gift."],
+            Ashley: ["Wow, thanks!", "You're awesome!", "Cool gift!"],
+            Nicole: ["A gift? Interesting.", "I'll accept this.", "You're generous."]
+        };
+        
+        return responses[npcName]?.[Math.floor(Math.random() * responses[npcName].length)] || "Thank you for the gift.";
+    };
+    
     const setAIMode = (enabled) => {
         aiMode = enabled;
     };
     
     const getAIMode = () => aiMode;
     
-    const getResponse = (mood, relationship, adultLevel = 0, npcName = 'Eve') => {
+    const getResponse = (mood, relationship, adultLevel = 0, npcName = 'Eve', playerText = "", optionType = "") => {
         const state = IntegratedGameState.getState();
-        let responseSet;
+        const npc = IntegratedGameState.getNPC(npcName);
+        const currentMood = npc?.baseMood || mood;
+        const currentRelationship = npc?.relationship || relationship;
         
-        // Get emotion-based response
-        const emotionResponse = EmotionSystem.getEmotionResponse(npcName, adultLevel > 0 ? 'insult' : 'compliment');
-        if (emotionResponse && Math.random() > 0.3) {
-            return emotionResponse;
+        // 1. Try context-aware response first (30% chance)
+        if (playerText && optionType && Math.random() < 0.3) {
+            const contextResponse = getContextResponse(npcName, playerText, optionType, currentRelationship);
+            if (contextResponse) {
+                return contextResponse;
+            }
         }
         
+        // 2. Check for emotion response (REDUCED from 70% to 30% chance)
+        if (Math.random() < 0.3) {
+            const emotionResponse = EmotionSystem.getEmotionResponse(
+                npcName, 
+                adultLevel > 0 ? 'insult' : 'compliment'
+            );
+            if (emotionResponse) {
+                return emotionResponse;
+            }
+        }
+        
+        // 3. Base response based on NPC-specific data
+        let responseSet;
+        
         if (aiMode) {
-            // AI Mode: Dynamic, contextual responses
-            if (relationship > 70 && adultLevel > 0 && state.adultMode) {
-                responseSet = responses.ai_adult;
-            } else if (mood > 70) {
-                responseSet = responses.ai_positive;
-            } else if (mood > 40) {
-                responseSet = responses.ai_neutral;
+            // AI Mode: Use NPC-specific responses
+            if (currentRelationship > 70 && adultLevel > 0 && state.adultMode) {
+                responseSet = responses.ai_adult[npcName] || responses.ai_adult.Eve;
+            } else if (currentMood > 70) {
+                responseSet = responses.ai_positive[npcName] || responses.ai_positive.Eve;
+            } else if (currentMood > 40) {
+                responseSet = responses.ai_neutral[npcName] || responses.ai_neutral.Eve;
             } else {
-                responseSet = responses.ai_negative;
+                responseSet = responses.ai_negative[npcName] || responses.ai_negative.Eve;
             }
         } else {
-            // Simple Mode: Static, predictable responses
+            // Simple Mode: Static responses
             if (adultLevel > 0 && state.adultMode) {
                 responseSet = responses.simple_adult;
-            } else if (mood > 60) {
+            } else if (currentMood > 60) {
                 responseSet = responses.simple_positive;
-            } else if (mood > 30) {
+            } else if (currentMood > 30) {
                 responseSet = responses.simple_neutral;
             } else {
                 responseSet = responses.simple_negative;
             }
         }
         
-        // Add NPC-specific flavor
-        const npcDialogs = IntegratedGameState.getNPCDialogs(npcName);
-        if (npcDialogs && Math.random() > 0.5) {
-            if (mood > 70 && npcDialogs.compliments) {
-                responseSet = [...responseSet, ...npcDialogs.compliments];
-            } else if (npcDialogs.greetings) {
-                responseSet = [...responseSet, ...npcDialogs.greetings];
-            }
-        }
-        
-        // Add story dialog if available
-        if (state.enhancedMode && relationship > 20) {
-            const storyDialog = StoryEngine.generateStoryDialog(npcName, relationship);
-            if (storyDialog && Math.random() > 0.7) {
-                responseSet = [storyDialog, ...responseSet];
+        // Add personality-specific flavor
+        if (npc) {
+            const personalityResponses = {
+                confident: ["I like your confidence.", "You've got nerve.", "Bold move."],
+                flirtatious: ["You're making this fun!", "Keep going!", "I like your style!"],
+                romantic: ["That's beautiful.", "You're quite the poet.", "How romantic."],
+                fun: ["This is fun!", "You're hilarious!", "Awesome!"],
+                mysterious: ["Intriguing.", "You're full of surprises.", "Interesting."]
+            };
+            
+            if (personalityResponses[npc.personality] && Math.random() > 0.7) {
+                responseSet = [...responseSet, ...personalityResponses[npc.personality]];
             }
         }
         
         return responseSet[Math.floor(Math.random() * responseSet.length)];
     };
     
-    const generateComment = (npcName, adultLevel = 0) => {
+    const generateComment = (npcName, adultLevel = 0, playerText = "", optionType = "") => {
         const state = IntegratedGameState.getState();
+        const npc = IntegratedGameState.getNPC(npcName);
         
-        // Emotion-based comments
+        // Check cooldown (3 seconds between comments)
+        const now = Date.now();
+        const lastCommentTime = commentCooldowns.get(npcName) || 0;
+        if (now - lastCommentTime < 3000) {
+            return null; // Skip comment due to cooldown
+        }
+        commentCooldowns.set(npcName, now);
+        
+        // Get context from player's action
+        const playerAction = playerText.toLowerCase();
+        let contextAwareComment = "";
+        
+        // Generate context-aware comment based on player's dialog choice
+        if (optionType === 'compliment' || playerAction.includes('compliment')) {
+            contextAwareComment = getComplimentThought(npcName, npc?.baseMood || 50);
+        } 
+        else if (optionType === 'flirt' || playerAction.includes('flirt')) {
+            contextAwareComment = getFlirtThought(npcName, npc?.relationship || 0);
+        }
+        else if (optionType === 'gift' || playerAction.includes('gift') || playerAction.includes('give')) {
+            contextAwareComment = getGiftThought(npcName);
+        }
+        else if (playerAction.includes('drink')) {
+            contextAwareComment = getDrinkThought(npcName);
+        }
+        else if (playerAction.includes('story') || playerAction.includes('tell')) {
+            contextAwareComment = getStoryThought(npcName);
+        }
+        else {
+            contextAwareComment = getGeneralThought(npcName, npc?.baseMood || 50);
+        }
+        
+        // Add emotion flavor
         const emotion = EmotionSystem.getEmotion(npcName);
         if (emotion && Math.random() > 0.5) {
-            const emotionComments = {
-                joy: ["I'm really enjoying this!", "He makes me so happy!", "What a wonderful conversation!"],
-                anger: ["How annoying!", "I can't believe he said that!", "This is so frustrating!"],
-                trust: ["I feel like I can really trust him.", "He's so honest and genuine.", "I can open up to him."],
-                anticipation: ["I wonder what he'll say next.", "This is getting interesting.", "What's going to happen?"]
-            };
-            
-            if (emotionComments[emotion.current]) {
-                return emotionComments[emotion.current][Math.floor(Math.random() * emotionComments[emotion.current].length)];
-            }
+            return addEmotionToComment(contextAwareComment, emotion.current);
         }
         
-        if (aiMode) {
-            // AI Mode: Contextual, varied comments
-            const comments = [
-                'He actually said something interesting for once.',
-                'I might give him a chance if he keeps this up.',
-                'Same old lines, different guy.',
-                'There might be hope for him yet.',
-                'I wonder if he knows how transparent he is.'
-            ];
-            
-            if (adultLevel > 0 && state.adultMode) {
-                comments.push(
-                    'He\'s being quite forward... I like that.',
-                    'Finally someone who isn\'t afraid to go there.',
-                    'This could get interesting...',
-                    'He knows what he wants, I\'ll give him that.',
-                    'Maybe tonight won\'t be so boring after all.'
-                );
+        return contextAwareComment;
+    };
+    
+    const getComplimentThought = (npcName, mood) => {
+        const thoughts = {
+            Eve: {
+                high: ["That was actually a nice compliment.", "He's getting better at this.", "I might be starting to like him."],
+                medium: ["Another compliment. Original.", "At least he's trying.", "Flattery will only get him so far."],
+                low: ["Empty words.", "He thinks that'll work?", "Please."]
+            },
+            Jessica: {
+                high: ["He's so sweet!", "I love compliments!", "He knows how to make me smile!"],
+                medium: ["Nice compliment!", "He's trying!", "Cute!"],
+                low: ["Meh.", "Could be better.", "Nice try."]
+            },
+            Danielle: {
+                high: ["How romantic.", "He's quite charming.", "That was thoughtful."],
+                medium: ["That was nice.", "Polite.", "Appropriate."],
+                low: ["Unnecessary.", "Too forward.", "Let's keep it professional."]
+            },
+            Ashley: {
+                high: ["Awesome compliment!", "He's cool!", "That made my day!"],
+                medium: ["Nice!", "Cool!", "Thanks!"],
+                low: ["Whatever.", "Okay.", "Sure."]
+            },
+            Nicole: {
+                high: ["Interesting compliment.", "He's observant.", "Not bad."],
+                medium: ["Acceptable.", "Fine.", "Okay."],
+                low: ["Predictable.", "Boring.", "Next."]
             }
-            
-            if (state.mood > 70) {
-                comments.push('I\'m actually enjoying this conversation!');
-                comments.push('He\'s not like the others...');
-            } else if (state.mood < 30) {
-                comments.push('How much longer do I have to pretend to be interested?');
-                comments.push('This is getting painful to watch.');
+        };
+        
+        const npcThoughts = thoughts[npcName] || thoughts.Eve;
+        let thoughtSet;
+        
+        if (mood > 70) thoughtSet = npcThoughts.high;
+        else if (mood > 40) thoughtSet = npcThoughts.medium;
+        else thoughtSet = npcThoughts.low;
+        
+        return thoughtSet[Math.floor(Math.random() * thoughtSet.length)];
+    };
+    
+    const getFlirtThought = (npcName, relationship) => {
+        const thoughts = {
+            Eve: {
+                high: ["He's being bold. I like that.", "Finally someone with confidence.", "This could get interesting..."],
+                medium: ["Smooth move.", "He has courage.", "Interesting approach."],
+                low: ["Too forward.", "Slow down, cowboy.", "Not so fast."]
+            },
+            Jessica: {
+                high: ["Ooh, I like him!", "He's so smooth!", "This is getting fun!"],
+                medium: ["Cheeky!", "He's funny!", "Nice try!"],
+                low: ["Easy there!", "Whoa!", "Too fast!"]
+            },
+            Danielle: {
+                high: ["My, my...", "He's being quite forward.", "This is unexpected."],
+                medium: ["That's bold.", "Interesting.", "Hmm."],
+                low: ["Inappropriate.", "Too much.", "Please stop."]
+            },
+            Ashley: {
+                high: ["Haha, he's funny!", "I like his style!", "This is fun!"],
+                medium: ["Cheeky!", "Bold!", "Hehe."],
+                low: ["Whoa!", "Easy!", "Too soon!"]
+            },
+            Nicole: {
+                high: ["Bold move. I respect that.", "He's not afraid.", "Interesting gamble."],
+                medium: ["Risky.", "He has nerve.", "Interesting."],
+                low: ["Too risky.", "Reckless.", "Poor judgment."]
             }
-            
-            if (state.relationship > 50) {
-                comments.push('He\'s growing on me...');
+        };
+        
+        const npcThoughts = thoughts[npcName] || thoughts.Eve;
+        let thoughtSet;
+        
+        if (relationship > 60) thoughtSet = npcThoughts.high;
+        else if (relationship > 30) thoughtSet = npcThoughts.medium;
+        else thoughtSet = npcThoughts.low;
+        
+        return thoughtSet[Math.floor(Math.random() * thoughtSet.length)];
+    };
+    
+    const getGiftThought = (npcName) => {
+        const thoughts = {
+            Eve: ["A gift? How thoughtful.", "He's trying to impress me.", "Nice gesture."],
+            Jessica: ["Ooh, a present! I love presents!", "How sweet of him!", "For me? Yay!"],
+            Danielle: ["That's very kind of him.", "He's quite generous.", "A thoughtful gift."],
+            Ashley: ["Awesome! A gift!", "He's so nice!", "Cool present!"],
+            Nicole: ["A gift. Interesting strategy.", "He's trying to win favor.", "Acceptable."]
+        };
+        
+        return thoughts[npcName]?.[Math.floor(Math.random() * thoughts[npcName].length)] || 
+               "He gave me a gift.";
+    };
+    
+    const getDrinkThought = (npcName) => {
+        const thoughts = {
+            Eve: ["A drink. At least he's polite.", "That was thoughtful.", "I needed that."],
+            Jessica: ["Yay, drinks!", "He knows what I like!", "Cheers to that!"],
+            Danielle: ["How gentlemanly.", "A thoughtful gesture.", "That was nice."],
+            Ashley: ["Awesome! Free drink!", "He's cool!", "Sweet!"],
+            Nicole: ["A drink. Standard move.", "Acceptable offer.", "Fine."]
+        };
+        
+        return thoughts[npcName]?.[Math.floor(Math.random() * thoughts[npcName].length)] || 
+               "He offered me a drink.";
+    };
+    
+    const getStoryThought = (npcName) => {
+        const thoughts = {
+            Eve: ["He's opening up. Interesting.", "A personal story. Good move.", "Now we're getting somewhere."],
+            Jessica: ["I love stories!", "He's sharing with me!", "This is getting personal!"],
+            Danielle: ["How intimate.", "He's being vulnerable.", "That's beautiful."],
+            Ashley: ["Cool story!", "He's interesting!", "Nice!"],
+            Nicole: ["Interesting revelation.", "He's sharing information.", "Noted."]
+        };
+        
+        return thoughts[npcName]?.[Math.floor(Math.random() * thoughts[npcName].length)] || 
+               "He told me a story.";
+    };
+    
+    const getGeneralThought = (npcName, mood) => {
+        const thoughts = {
+            Eve: {
+                high: ["He's not like the others.", "I'm actually enjoying this.", "This might be worth my time."],
+                medium: ["Another conversation.", "Let's see where this goes.", "He's trying."],
+                low: ["How much longer?", "This is getting old.", "Not impressed."]
+            },
+            Jessica: {
+                high: ["This is fun!", "I like talking to him!", "He's awesome!"],
+                medium: ["Nice chat!", "Good conversation!", "Having fun!"],
+                low: ["Okay, I guess.", "Whatever.", "Fine."]
+            },
+            Danielle: {
+                high: ["What a pleasant conversation.", "He's quite charming.", "This is nice."],
+                medium: ["Polite conversation.", "Acceptable.", "Fine."],
+                low: ["I should get back to work.", "This is dragging.", "Enough."]
+            },
+            Ashley: {
+                high: ["Awesome conversation!", "He's cool!", "Having a blast!"],
+                medium: ["Nice talk!", "Good times!", "Cool!"],
+                low: ["Okay then.", "Sure.", "Uh huh."]
+            },
+            Nicole: {
+                high: ["Intriguing conversation.", "He's interesting.", "This has potential."],
+                medium: ["Acceptable dialogue.", "Fine.", "Proceed."],
+                low: ["Time is money.", "Get to the point.", "Boring."]
             }
-            
-            return comments[Math.floor(Math.random() * comments.length)];
-        } else {
-            // Simple Mode: Basic, predictable comments
-            const simpleComments = [
-                'He\'s talking to me.',
-                'Another conversation.',
-                'I should respond.',
-                'What should I say?',
-                'This is a conversation.'
-            ];
-            
-            if (adultLevel > 0 && state.adultMode) {
-                simpleComments.push('That was forward.');
-                simpleComments.push('Direct approach.');
-            }
-            
-            if (state.mood > 70) {
-                simpleComments.push('Nice conversation.');
-                simpleComments.push('Enjoying this.');
-            } else if (state.mood < 30) {
-                simpleComments.push('Not great.');
-                simpleComments.push('Could be better.');
-            }
-            
-            return simpleComments[Math.floor(Math.random() * simpleComments.length)];
+        };
+        
+        const npcThoughts = thoughts[npcName] || thoughts.Eve;
+        let thoughtSet;
+        
+        if (mood > 70) thoughtSet = npcThoughts.high;
+        else if (mood > 40) thoughtSet = npcThoughts.medium;
+        else thoughtSet = npcThoughts.low;
+        
+        return thoughtSet[Math.floor(Math.random() * thoughtSet.length)];
+    };
+    
+    const addEmotionToComment = (comment, emotion) => {
+        const emotionModifiers = {
+            joy: ["So happy about ", "Excited that ", "Thrilled "],
+            anger: ["Annoyed that ", "Frustrated with ", "Upset about "],
+            trust: ["Glad I can trust ", "Happy to open up to ", "Comfortable with "],
+            anticipation: ["Curious about ", "Interested in ", "Wondering about "],
+            sadness: ["Disappointed with ", "Sad about ", "Regretting "],
+            disgust: ["Disgusted by ", "Revolted by ", "Appalled at "],
+            fear: ["Worried about ", "Concerned by ", "Nervous of "],
+            surprise: ["Surprised by ", "Shocked at ", "Amazed by "]
+        };
+        
+        if (emotionModifiers[emotion] && Math.random() > 0.5) {
+            const modifier = emotionModifiers[emotion][Math.floor(Math.random() * emotionModifiers[emotion].length)];
+            return modifier + comment.toLowerCase();
         }
+        
+        return comment;
     };
     
     return {
