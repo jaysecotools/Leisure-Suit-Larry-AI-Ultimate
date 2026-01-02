@@ -626,8 +626,8 @@ const IntegratedGameState = (() => {
     let state = {
         ageVerified: false,
         adultMode: false,
-        score: 250,
-        time: 765,
+        score: 0,
+        time: 0,
         relationship: 15,
         mood: 50,
         intimacy: 0,
